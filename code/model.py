@@ -5,6 +5,9 @@ from ops import *
 
 class Unet(nn.Module):
     def __init__(self, in_channels, n_base_filters=32, layers=4, n_class=2):
+        """
+        The Unet architecture
+        """
         super().__init__()
         self.maxpool = nn.MaxPool2d(2, 2)
 
