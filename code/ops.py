@@ -42,19 +42,6 @@ class ContextBlock(nn.Module):
         return x
 
 
-# class DownBlock(nn.Module):
-#     def __init__(self, in_channels, out_channels, activation='lrelu', normalization='instance'):
-#         super().__init__()
-#         self.context = ContextBlock(in_channels, out_channels, activation=activation, normalization=normalization)
-#         self.maxpool = nn.MaxPool2d(2)
-
-#     def forward(self, x):
-#         skip = self.context(x)
-#         x = self.maxpool(skip)
-
-#         return x, skip
-
-
 class UpBlock(nn.Module):
     def __init__(self, in_channels, out_channels, activation='lrelu', normalization='instance', interpolation="nearest"):
         super().__init__()
