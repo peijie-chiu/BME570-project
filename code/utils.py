@@ -1,8 +1,9 @@
+import os
 import numpy as np
 import matplotlib.pyplot as plt
-import matplotlib as mpl
 
-mpl.rcParams['image.cmap'] = 'viridis'
+np.random.seed(0)
+
 
 def rect(x):
     return np.abs(x) < 0.5
@@ -18,21 +19,20 @@ def gaussian(X, Y, sigma_n, N):
     c_x, c_y = c_x.reshape(1, 1, -1), c_y.reshape(1, 1, -1)
     coeff = 1 / (2 * np.pi * sigma_n ** 2)
     dist = (X - c_x) ** 2 + (Y - c_y) ** 2
-    dist = dist.sum(axis=-1)
 
-    return  coeff * np.exp(- dist / (2 * sigma_n ** 2))
+    return  coeff * np.exp(- dist / (2 * sigma_n ** 2)).sum(axis=-1)
 
 def sig(As, dim, range):
     x = np.linspace(range[0], range[1], dim[0])
     y = np.linspace(range[0], range[1], dim[1])
     r_x, r_y = np.meshgrid(x, y)
-    sigma_s = np.random.uniform(1, 1/2)
+    sigma_s = np.random.uniform(0, 1/2)
     c_x, c_y = np.random.uniform(-1/4, 1/4), np.random.uniform(-1/4, 1/4)
     rect_r = np.logical_and(rect(r_x), rect(r_y))
 
     singnal = As * rect_r * circ(r=(r_x, r_y), center_coords=(c_x, c_y), sigma_s=sigma_s)
 
-    return singnal
+    return singnal, sigma_s
 
 def backgrd(sigma_n, a_n, N, dim, range):
     x = np.linspace(range[0], range[1], dim[0])
@@ -44,24 +44,44 @@ def backgrd(sigma_n, a_n, N, dim, range):
     
     return rect_XY * lumps
 
-signal = sig(3, dim=(64, 64), range=(-4, 4)) 
-background = backgrd(1, 1, 10, dim=(64, 64), range=(-1/8, 1/8))
-print(signal.shape, background.shape)
-f = signal + background 
-print(f)
-plt.figure()
 
-plt.subplot(1, 3, 1)
-plt.imshow(signal)
-plt.axis('off')
+def save_figure(imgs, titles, save_path):
+    plt.figure()
+    num = len(imgs)
+    for i in range(num):
+        plt.subplot(1, num, i+1)
+        plt.imshow(imgs[i])
+        plt.axis('off')
+        plt.title(titles[i])
 
-plt.subplot(1, 3, 2)
-plt.imshow(background)
-plt.axis('off')
+    plt.savefig(save_path)
 
-plt.subplot(1, 3, 3)
-plt.imshow(f)
-plt.axis('off')
+def generate_object(num_samples, dim=(64, 64), out_dir="data", save_fig=True):
+    try:
+        os.mkdir(out_dir)
+    except OSError as error:
+        pass 
 
-plt.show()
+    for i in range(num_samples):
+        signal, sigma_s = sig(3, dim=dim, range=(-2, 2)) 
+        background = backgrd(sigma_s, 1, 10, dim=dim, range=(-1/2, 1/2))
+        object = signal + background 
+        mask = np.ones(dim)
+        mask[signal > 0] = 2
+        data = np.stack([signal, background, object, mask])
+        save_path = os.path.join(out_dir, str(i))
 
+        try:
+            os.mkdir(save_path)
+        except OSError as error:
+            pass
+
+        with open(f"{save_path}/orig.npy", 'wb') as f:
+            np.save(f, data)
+
+        if save_fig:
+            titles = ['signal', 'background', 'object', 'mask']
+            save_figure(data, titles, f"{save_path}/vis.jpg")
+
+
+        return data
