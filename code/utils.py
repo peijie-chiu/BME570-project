@@ -1,5 +1,7 @@
 import os
 import numpy as np
+import matplotlib
+matplotlib.use('agg')
 import matplotlib.pyplot as plt
 
 np.random.seed(0)
@@ -55,6 +57,7 @@ def save_figure(imgs, titles, save_path):
         plt.title(titles[i])
 
     plt.savefig(save_path)
+    plt.close('all')
 
 def generate_object(num_samples, dim=(64, 64), out_dir="data", save_fig=True):
     try:
@@ -63,9 +66,9 @@ def generate_object(num_samples, dim=(64, 64), out_dir="data", save_fig=True):
         pass 
 
     for i in range(num_samples):
-        signal, sigma_s = sig(3, dim=dim, range=(-2, 2)) 
+        signal, sigma_s = sig(3, dim=dim, range=(-1/2, 1/2))
         background = backgrd(sigma_s, 1, 10, dim=dim, range=(-1/2, 1/2))
-        object = signal + background 
+        object = signal + background
         mask = np.ones(dim)
         mask[signal > 0] = 2
         data = np.stack([signal, background, object, mask])
@@ -84,4 +87,4 @@ def generate_object(num_samples, dim=(64, 64), out_dir="data", save_fig=True):
             save_figure(data, titles, f"{save_path}/vis.jpg")
 
 
-        return data
+        #return data
