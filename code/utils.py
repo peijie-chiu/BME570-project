@@ -46,7 +46,7 @@ def backgrd(sigma_n, a_n, N, dim, range):
 
 
 def save_figure(imgs, titles, save_path):
-    plt.figure()
+    fig = plt.figure()
     num = len(imgs)
     for i in range(num):
         plt.subplot(1, num, i+1)
@@ -55,16 +55,18 @@ def save_figure(imgs, titles, save_path):
         plt.title(titles[i])
 
     plt.savefig(save_path)
+    plt.close('all')
 
-def generate_object(num_samples, dim=(64, 64), out_dir="data", save_fig=True):
+
+def generate_object(num_samples, s_range=(-1/2, 1/2), dim=(64, 64), out_dir="data", save_fig=True):
     try:
         os.mkdir(out_dir)
     except OSError as error:
         pass 
 
     for i in range(num_samples):
-        signal, sigma_s = sig(3, dim=dim, range=(-2, 2)) 
-        background = backgrd(sigma_s, 1, 10, dim=dim, range=(-1/2, 1/2))
+        signal, sigma_s = sig(3, dim=dim, range=s_range) 
+        background = backgrd(sigma_s, 1, 10, dim=dim, range=s_range)
         object = signal + background 
         mask = np.ones(dim)
         mask[signal > 0] = 2
@@ -83,5 +85,4 @@ def generate_object(num_samples, dim=(64, 64), out_dir="data", save_fig=True):
             titles = ['signal', 'background', 'object', 'mask']
             save_figure(data, titles, f"{save_path}/vis.jpg")
 
-
-        return data
+generate_object(500)
