@@ -1,5 +1,14 @@
+import os
 import numpy as np
+# import matplotlib
+# matplotlib.use('agg')
+# import matplotlib.pyplot as plt
+from utils import save_figure
 
+def generate_matrix(object, mask, dim):
+    # assert object.shape == (64, 64)
+    delta_a = 1/64 * 1/64
+    times = int(64 / dim)
 
 def generate_sys_matrix(dim=64):
     flip_angles = ((np.pi / 8) * np.arange(0, 8)).reshape(-1, 1)

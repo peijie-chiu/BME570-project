@@ -1,5 +1,6 @@
 import splitfolders
 from utils import generate_object
+from imaging import generate_recon
 
 ## generate object
 # num_objects = 500
