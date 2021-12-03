@@ -21,8 +21,10 @@ class ConvBlock(nn.Module):
         x = self.conv(x)
         if self.normalization:
             x = self.norm(x)
+
         if self.activation:
             x = self.act(x)
+        
         return x
 
 

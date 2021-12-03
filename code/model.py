@@ -1,4 +1,3 @@
-import torch 
 import torch.nn as nn
 
 from ops import *
@@ -37,5 +36,7 @@ class Unet(nn.Module):
 
         for idx, up_block in enumerate(self.up_blocks):
             x = up_block(x, skip_connections[::-1][idx])
+
+        x = self.conv_seg(x)
 
         return x
