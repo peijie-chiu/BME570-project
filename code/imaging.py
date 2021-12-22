@@ -5,17 +5,18 @@ from skimage.io import imsave
 # import matplotlib.pyplot as plt
 
 def downsample(obj, mask, factor=2.):
+    # HxWxB
     image = obj.copy()
     mask_copy = mask.copy()
     if len(image.shape) == 2:
-        image = image[np.newaxis, ...]
-        mask_copy = mask_copy[np.newaxis, ...]
+        image = image[..., np.newaxis]
+        mask_copy = mask_copy[..., np.newaxis]
 
-    B, H, W = image.shape 
-    image_reshaped = image.reshape(B, H // factor, factor, W // factor, factor)
-    mask_reshaped = image.reshape(B, H // factor, factor, W // factor, factor)
+    H, W, B = image.shape 
+    image_reshaped = image.reshape(H // factor, factor, W // factor, factor, B)
+    mask_reshaped = mask_copy.reshape(H // factor, factor, W // factor, factor, B)
 
-    return image_reshaped.max(axis=(2, 4)), mask_reshaped.max(axis=(2, 4))
+    return image_reshaped.max(axis=(1, 3)), mask_reshaped.max(axis=(1, 3))
 
 def im2cols(k_size, stride, out_size):
     k_size, out_size = int(k_size), int(out_size)
@@ -29,7 +30,7 @@ def im2cols(k_size, stride, out_size):
 
     return i, j
 
-def generate_sys_matrix(s_range=(-1/2, 1/2), dim=64, projection=(16, 8), downsample=1):
+def generate_sys_matrix(s_range=(-1/2, 1/2), dim=64, projection=(16, 8), downsample_factor=1):
     delta = 1 / (dim ** 2)
     flip_angles = (np.pi / projection[1]) * np.arange(0, projection[1])
     m = (np.arange(1, projection[0] + 1, 1) - 8).reshape(-1, 1)
@@ -43,30 +44,34 @@ def generate_sys_matrix(s_range=(-1/2, 1/2), dim=64, projection=(16, 8), downsam
     r_x, r_y = np.meshgrid(x, y)
     coords = np.hstack([r_x.reshape(-1, 1), r_y.reshape(-1, 1)])
 
-    H = np.exp(-2j * np.pi * km.dot(coords.T) / dim) 
+    H = np.exp(-2j * np.pi * km.dot(coords.T)) 
     H = H * delta
 
-    if downsample > 1:
+    if downsample_factor > 1:
         H = H.reshape(projection[0]*projection[1], dim, dim)
-        i, j = im2cols(downsample, downsample, dim // downsample)
+        i, j = im2cols(downsample_factor, downsample_factor, dim // downsample_factor)
         H = H[:, i, j].sum(axis=1)
 
     return H
 
-def reconstruction(obj, H):
+def reconstruction(obj, H, projection=(16, 8)):
+    # HxWXB
     image = obj.copy()
     if len(image.shape) == 2:
-        image = image[np.newaxis, ...]
+        image = image[..., np.newaxis]
 
-    image = image.reshape(image.shape[0], -1)
-    proj = H.dot(image.T)
+    image_reshaped = image.reshape(-1, image.shape[2])
+    proj = H.dot(image_reshaped)
     H_MP = np.linalg.pinv(H)
-    recon = H_MP.dot(proj).T
+    recon = H_MP.dot(proj)
 
-    return np.abs(proj).T, recon
+    return np.abs(proj).reshape(projection[0], projection[1], -1), np.abs(recon).reshape(image.shape)
 
 
-# H = generate_sys_matrix()
+H = generate_sys_matrix(downsample_factor=1)
+print(H.shape)
+print(np.linalg.matrix_rank(H))
+
 # H_reshape = H.reshape(128, 64, 64)
 # i, j = im2cols(2, 2, 32)
 # H_downsampled = H_reshape[:, i, j].sum(axis=1)

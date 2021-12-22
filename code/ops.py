@@ -29,7 +29,7 @@ class ConvBlock(nn.Module):
 
 
 class ContextBlock(nn.Module):
-    def __init__(self, in_channels, out_channels, kernel_size=3, stride=1, padding=1, bias=False, activation='lrelu', normalization='instance', drop_p=0.3):
+    def __init__(self, in_channels, out_channels, kernel_size=3, stride=1, padding=1, bias=True, activation='lrelu', normalization='instance', drop_p=0.1):
         super().__init__()
         
         self.conv_block_1 = ConvBlock(in_channels, out_channels, kernel_size=kernel_size, stride=stride, padding=padding, bias=bias, activation=activation, normalization=normalization)

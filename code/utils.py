@@ -1,7 +1,6 @@
 import numpy as np
-# import matplotlib
-# matplotlib.use("Agg")
-
+import matplotlib
+matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
 np.random.seed(42)
@@ -16,7 +15,8 @@ def save_figure(imgs, titles, save_path, suptitle=None):
         plt.imshow(imgs[i])
         plt.axis('off')
         plt.title(titles[i])
-
+        
+    plt.tight_layout()
     plt.savefig(save_path)
     plt.close('all')
 
@@ -36,7 +36,7 @@ def multi_sig(As, dim= (64, 64), s_range=(-1/2, 1/2), num=500):
     y = np.linspace(s_range[0], s_range[1], dim[1])
     r_x, r_y = np.meshgrid(x, y)
     r_x, r_y = r_x[..., np.newaxis], r_y[..., np.newaxis]
-    sigma_s = np.random.uniform(1/16, 1/2, size=(num, ))
+    sigma_s = np.random.uniform(0, 1/2, size=(num, ))
     c_x, c_y = np.random.uniform(-1/4, 1/4, size=(1, 1, num)), np.random.uniform(-1/4, 1/4, size=(1, 1, num))
     signal = circ(r=(r_x, r_y), center_coords=(c_x, c_y), sigma_s=sigma_s)
     pixel = pixelated(r=(r_x, r_y))

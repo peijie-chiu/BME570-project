@@ -37,6 +37,7 @@ def train_epoch(train_dl, model, optimizer, criterion, eval_metric):
     running_num = 0
     model.train()
     for n_iter, (x, y) in enumerate(train_dl):
+        # print(x.max(), x.min())
         bsz = x.size(0)
         running_num += bsz
 
@@ -58,33 +59,32 @@ def train_epoch(train_dl, model, optimizer, criterion, eval_metric):
 
 
 ############################## Training ##############################
-input_dir = os.path.join('cache', 'inputs/recon_32')
-save_dir = os.path.join('cache', 'exps/recon_32')
+pixels = 8
+input_dir = os.path.join('../data', f'{pixels}x{pixels}')
+save_dir = os.path.join('../cache', f'exps/{pixels}x{pixels}')
 
 try:
     os.mkdir(save_dir)
 except:
     pass
 
-batch_size = 8
-epochs = 100
+batch_size = 16
+epochs = 200
 lr = 5e-4
-dispatcher = 10
+dispatcher = 5
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
-train_dir = os.path.join(input_dir, 'train_set.pt')
-val_dir = os.path.join(input_dir, 'val_set.pt')
-train_set = torch.load(train_dir)
-val_set = torch.load(val_dir)
+train_set = SegDataset(os.path.join(input_dir, "train_set.npy"))
+val_set = SegDataset(os.path.join(input_dir, "val_set.npy"))
 
-train_dl = DataLoader(train_set, batch_size=batch_size)
+train_dl = DataLoader(train_set, batch_size=batch_size, shuffle=True)
 val_dl = DataLoader(val_set, batch_size=batch_size)
 
-model = Unet(in_channels=1, n_class=1).to(device)
+model = Unet(in_channels=1, n_class=1, layers=3, n_base_filters=32).to(device)
 criterion = WeightedDiceLoss()
-optimizer = optim.Adam(model.parameters(), lr=lr, weight_decay=1e-3)
-scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, 'min', factor=0.5, patience=5, min_lr=1e-4)
+optimizer = optim.Adam(model.parameters(), lr=lr, weight_decay=1e-5)
+scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, 'max', factor=0.5, patience=5, min_lr=1e-4)
 
 eval_metric = DiceCoeff()
 
@@ -110,7 +110,7 @@ for ep in range(epochs):
 
     torch.save(model.state_dict(), os.path.join(save_path, f"ep{ep}.pt"))
 
-    scheduler.step(val_loss)
+    scheduler.step(val_dice)
 
 losses = np.asarray(losses)
 dices = np.asarray(dices)
